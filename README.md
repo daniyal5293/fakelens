@@ -160,7 +160,7 @@ python -m fakelens.analysis.plots --results results --runs runs
   * The reals are ImageNet photographs, so other domains (art, screenshots, faces, medical images) are untested.
 * **Remaining biases.**
   * Re-encoding both classes at quality 96 removes the format shortcut, but reals end up double-compressed while fakes are compressed once.
-  * BigGAN images (128 px) must be upscaled to 224, which adds interpolation traces that real images rarely have.
+  * BigGAN images (128 px) must be upscaled to 224, which adds interpolation traces that real images rarely have. In training, the only upscaled images are about 7% of the reals (those with a side under 224 px); no fakes are upscaled. A model could therefore learn "interpolation traces mean real", which would push BigGAN fakes towards *real*. Check BigGAN's fake accuracy against its real accuracy before blaming the generator itself.
   * We discuss both effects in the report.
 * **Licence.** Trained weights inherit the non-commercial terms of the training data.
 

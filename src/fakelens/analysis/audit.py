@@ -39,15 +39,21 @@ def meta_features(df: pd.DataFrame) -> np.ndarray:
 def distribution_table(df: pd.DataFrame) -> pd.DataFrame:
     d = df[df.split.isin(["train", "test"])].copy()
     d["cls"] = d.label.map({0: "real", 1: "fake"})
+    # plain helper columns + built-in aggregations (no groupby.apply -> no pandas deprecation warnings)
+    d["is_jpeg"] = 100.0 * (d.format == "JPEG")
+    d["is_png"] = 100.0 * (d.format == "PNG")
+    d["q_jpeg"] = d.jpeg_quality.where(d.jpeg_quality > 0)
+    d["small"] = 100.0 * (np.minimum(d.width, d.height) < 224)
+    d["size_key"] = d.width.astype(str) + "x" + d.height.astype(str)
     g = d.groupby(["generator", "cls"])
     return pd.DataFrame({
         "n": g.size(),
-        "pct_jpeg": g.apply(lambda x: 100 * (x.format == "JPEG").mean()),
-        "median_jpeg_q": g.apply(lambda x: x.jpeg_quality[x.jpeg_quality > 0].median()),
-        "pct_png": g.apply(lambda x: 100 * (x.format == "PNG").mean()),
+        "pct_jpeg": g.is_jpeg.mean(),
+        "median_jpeg_q": g.q_jpeg.median(),
+        "pct_png": g.is_png.mean(),
         "median_w": g.width.median(), "median_h": g.height.median(),
-        "pct_min_side_lt_224": g.apply(lambda x: 100 * (np.minimum(x.width, x.height) < 224).mean()),
-        "n_distinct_sizes": g.apply(lambda x: x[["width", "height"]].drop_duplicates().shape[0]),
+        "pct_min_side_lt_224": g.small.mean(),
+        "n_distinct_sizes": g.size_key.nunique(),
     }).round(1).reset_index()
 
 
