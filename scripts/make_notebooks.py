@@ -10,13 +10,16 @@ SETUP = """# --- Kaggle setup (run first in every notebook) ---
 # Add Data: vtphatt2/GenImage-stable-diffusion-v1-4 and vtphatt2/GenImage-Validation
 #           (+ the output dataset of the previous notebook, if you split stages across sessions).
 import os, subprocess
-REPO = "https://github.com/<your-team>/fakelens.git"   # <- change, or upload the repo as a Kaggle dataset
+REPO = "https://github.com/daniyal5293/fakelens.git"   # <- change, or upload the repo as a Kaggle dataset
 if not os.path.exists("/kaggle/working/fakelens"):
     subprocess.run(["git", "clone", REPO, "/kaggle/working/fakelens"], check=True)
+else:
+    subprocess.run(["git", "-C", "/kaggle/working/fakelens", "pull"], check=False)
 os.chdir("/kaggle/working/fakelens")
 !pip install -q open_clip_torch
 !pip install -q -e . --no-deps
-!ls /kaggle/input"""
+# Show the dataset folder structure (look for .../train/ai, .../train/nature, .../val/ai, .../val/nature):
+!find /kaggle/input -maxdepth 4 -type d | head -60"""
 
 ROOTS = """# Check the dataset folder names printed above and fix them here if they differ.
 CFG = "configs/default.yaml"
@@ -87,6 +90,23 @@ NB = {
                  "!python -m fakelens.analysis.errors --config $CFG $SET --run $RUNS/p1/B/seed0 --ckpt $RUNS/p1/B/seed0/model.pt"),
         ("code", "import glob\nfrom IPython.display import Image, display\n"
                  "for f in sorted(glob.glob('results/figures/*.png')):\n    print(f); display(Image(f))"),
+    ],
+    "99_run_everything": [
+        ("md", "# 99 · Run the whole pipeline in one go\n"
+               "Use this after notebook 00 has worked interactively. Click **Save Version → Save & Run All (Commit)**. "
+               "Kaggle runs it in the background (up to 12 h) and keeps everything written to `/kaggle/working` "
+               "in the notebook's **Output** tab. Download `fakelens_results.zip` from there when it finishes."),
+        ("code", SETUP), ("code", ROOTS),
+        ("code", "# Write a Kaggle config with the dataset paths from the cell above\n"
+                 "import yaml\n"
+                 "cfg = yaml.safe_load(open('configs/default.yaml'))\n"
+                 "for kv in SET.replace('--set', '').split():\n"
+                 "    k, v = kv.split('=', 1); cfg['roots'][k.split('.')[1]] = v\n"
+                 "yaml.safe_dump(cfg, open('configs/kaggle.yaml', 'w'))\n"
+                 "print(cfg['roots'])"),
+        ("code", "!CFG=configs/kaggle.yaml bash scripts/run_all.sh 2>&1 | tee /kaggle/working/run_all.log"),
+        ("code", "!cd /kaggle/working/fakelens && zip -qr /kaggle/working/fakelens_results.zip results data/manifests checkpoints\n"
+                 "!ls -lh /kaggle/working/fakelens_results.zip"),
     ],
     "06_demo": [
         ("md", "# 06 · Gradio demo\nCopies the A2 and B checkpoints to `checkpoints/` and launches a public share link."),

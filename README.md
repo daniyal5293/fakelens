@@ -80,7 +80,7 @@ tests/                      unit tests + an end-to-end smoke test on a toy datas
 ### 1. On Kaggle (GPU)
 
 1. Create a notebook with **GPU** and **Internet** on. Add the two GenImage datasets above.
-2. Run `notebooks/00` → `06` in order, or run `bash scripts/run_all.sh`.
+2. Run `notebooks/00` interactively to check the data paths. Then run `notebooks/99_run_everything` with **Save Version → Save & Run All (Commit)**, which runs the whole pipeline in the background. Alternatively, run `notebooks/00` → `06` one at a time.
    * Run `!ls /kaggle/input` and fix `roots` in `configs/default.yaml` if the folder names differ. You can also pass an override, e.g. `--set roots.train_root=...`.
    * Feature caches and checkpoints go to `/kaggle/working`. To split stages across sessions, use **Save Version** and attach the output as input to the next notebook.
 3. Commit `data/manifests/manifest.csv` and `results/` back to the repo.
