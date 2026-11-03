@@ -7,6 +7,11 @@ CFG=${CFG:-configs/default.yaml}
 RUNS=$(python -c "import yaml;print(yaml.safe_load(open('$CFG'))['paths']['runs'])")
 S0="--seeds 0"
 
+# Pre-flight: fail in seconds (not hours) if any module is missing or broken.
+python -c "import fakelens.data.manifest, fakelens.analysis.audit, fakelens.features.extract, fakelens.features.backbones, \
+fakelens.train_head, fakelens.train_resnet, fakelens.robustness, fakelens.evaluate, fakelens.analysis.plots, \
+fakelens.analysis.embeddings, fakelens.analysis.errors; print('[preflight] all modules import OK')"
+
 # ---------------- Stage 0: data ----------------
 python -m fakelens.data.manifest --config "$CFG"
 python -m fakelens.analysis.audit --config "$CFG"

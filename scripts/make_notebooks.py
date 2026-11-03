@@ -107,6 +107,11 @@ NB = {
         ("code", "!CFG=configs/kaggle.yaml bash scripts/run_all.sh 2>&1 | tee /kaggle/working/run_all.log"),
         ("code", "!cd /kaggle/working/fakelens && zip -qr /kaggle/working/fakelens_results.zip results data/manifests checkpoints\n"
                  "!ls -lh /kaggle/working/fakelens_results.zip"),
+        ("code", "# Mark the Kaggle version as 'Error' (not 'Successful') if the pipeline stopped early.\n"
+                 "# The zip above still holds whatever finished, so partial results are never lost.\n"
+                 "log = open('/kaggle/working/run_all.log').read()\n"
+                 "assert 'Done. Tables' in log, 'Pipeline stopped early - read the last lines of run_all.log above'\n"
+                 "print('Pipeline finished OK')"),
     ],
     "06_demo": [
         ("md", "# 06 · Gradio demo\nCopies the A2 and B checkpoints to `checkpoints/` and launches a public share link."),
