@@ -31,8 +31,9 @@ def main(argv=None):
     ap.add_argument("--ckpt", default=None, help="if given, embed the head's pooled multi-layer feature")
     ap.add_argument("--n-per-gen", type=int, default=300)
     ap.add_argument("--raw", action="store_true")
+    ap.add_argument("--set", nargs="*", default=[], help="config overrides, e.g. roots.train_root=/path")
     args = ap.parse_args(argv)
-    cfg = load_config(args.config)
+    cfg = load_config(args.config, args.set)
     style.apply()
     spec = HEAD_MODELS[args.model]
     man = load_manifest(cfg["paths"]["manifest"])

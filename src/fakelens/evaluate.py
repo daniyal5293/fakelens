@@ -132,13 +132,14 @@ def main(argv=None):
     c.add_argument("--b", required=True)
     c.add_argument("--out", required=True)
     c.add_argument("--config", default="configs/default.yaml")
+    c.add_argument("--set", nargs="*", default=[])
     args = ap.parse_args(argv)
     if args.cmd == "aggregate":
         aggregate(args.runs, args.out)
     else:
         from fakelens.utils import load_config
 
-        cfg = load_config(args.config)
+        cfg = load_config(args.config, args.set)
         res = compare(args.a, args.b, cfg["data"]["groups"], cfg["experiments"]["bootstrap"])
         save_json(res, args.out)
         for k, v in res["scopes"].items():

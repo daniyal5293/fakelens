@@ -79,8 +79,9 @@ def main(argv=None):
     ap.add_argument("--ckpt", default=None, help="checkpoint for heatmaps (optional)")
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--set", nargs="*", default=[], help="config overrides, e.g. roots.train_root=/path")
     args = ap.parse_args(argv)
-    cfg = load_config(args.config)
+    cfg = load_config(args.config, args.set)
     man = load_manifest(cfg["paths"]["manifest"])
     pred = pd.read_csv(Path(args.run) / "test_pred.csv", dtype={"uid": str})
     model = Path(args.run).parent.name
