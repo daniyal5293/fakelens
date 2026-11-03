@@ -6,8 +6,8 @@
 # once the roots below point to the right folders.
 
 roots:
-  train_root: /kaggle/input/genimage-stable-diffusion-v1-4
-  test_root: /kaggle/input/genimage-validation
+  train_root: /kaggle/input/datasets/vtphatt2/genimage-stable-diffusion-v1-4
+  test_root: /kaggle/input/datasets/vtphatt2/genimage-validation
   wild_root: /kaggle/input/fakelens-wild        # optional: folder with real/ and fake/ subfolders
 
 paths:

@@ -172,6 +172,25 @@ def resolve_path(row, roots: dict) -> str:
     return str(Path(roots[rk]) / rp)
 
 
+def _no_images_help(root, split: str) -> str:
+    """Explain an empty scan: show what IS under the root (folders, archives) so the path can be fixed."""
+    root = Path(root)
+    dirs, archives = [], []
+    for dirpath, dirnames, filenames in os.walk(root):
+        depth = len(Path(dirpath).relative_to(root).parts)
+        if depth <= 5:
+            dirs.append(str(Path(dirpath).relative_to(root)) or ".")
+        archives += [str(Path(dirpath, f).relative_to(root)) for f in filenames
+                     if f.lower().endswith((".zip", ".tar", ".gz", ".7z")) or ".part" in f.lower() or "_part_" in f.lower()]
+        if len(dirs) > 60:
+            break
+    msg = (f"No images found under {root} in any '<...>/{split}/ai' or '<...>/{split}/nature' folder.\n"
+           f"Folders found (first 60): {dirs}\n")
+    if archives:
+        msg += f"Archive files found (dataset may need extracting): {archives[:10]}\n"
+    return msg
+
+
 def _take(df: pd.DataFrame, n: int, rng: np.random.Generator) -> pd.DataFrame:
     if len(df) <= n:
         return df.iloc[rng.permutation(len(df))]
@@ -201,16 +220,28 @@ def build_manifest(cfg: dict, roots: dict | None = None, include_wild: bool = Tr
 
     cands = []
     # --- train / val: SD v1.4 train/ ---
+    for key in ("train_root", "test_root"):
+        if not Path(roots[key]).exists():
+            raise FileNotFoundError(f"roots.{key} = {roots[key]!r} does not exist. Run "
+                                    "`!find /kaggle/input -maxdepth 6 -type d` and fix the path (config or --set).")
     pool = scan_genimage(roots["train_root"], "train_root", "train", generator=None)
     pool["generator"] = pool["generator"].fillna("sdv14")
     if verbose:
         print(f"[manifest] train_root: {len(pool)} images found")
+    if pool.empty:
+        raise RuntimeError(_no_images_help(roots["train_root"], "train"))
     for label in (LABEL_REAL, LABEL_FAKE):
         sub = _take(pool[pool.label == label], c(n_tr + n_va), rng)
         cands.append(_assign(sub, [("val", c(n_va)), ("train", c(n_tr))]))
 
     # --- test / logo: val/ of every generator ---
     pool = scan_genimage(roots["test_root"], "test_root", "val")
+    if pool.empty:
+        raise RuntimeError(_no_images_help(roots["test_root"], "val"))
+    unknown = pool[pool.generator.isna()]
+    if len(unknown):
+        dirs = sorted({str(Path(p).parent) for p in unknown.relpath})[:10]
+        print(f"[manifest] WARNING: {len(unknown)} images in folders with no recognisable generator name, e.g. {dirs}")
     if verbose:
         print(f"[manifest] test_root: {len(pool)} images found; per generator:\n"
               f"{pool.groupby(['generator', 'label']).size().unstack(fill_value=0)}")

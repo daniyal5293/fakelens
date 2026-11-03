@@ -19,11 +19,11 @@ os.chdir("/kaggle/working/fakelens")
 !pip install -q open_clip_torch
 !pip install -q -e . --no-deps
 # Show the dataset folder structure (look for .../train/ai, .../train/nature, .../val/ai, .../val/nature):
-!find /kaggle/input -maxdepth 4 -type d | head -60"""
+!find /kaggle/input -maxdepth 7 -type d | head -80"""
 
 ROOTS = """# Check the dataset folder names printed above and fix them here if they differ.
 CFG = "configs/default.yaml"
-SET = "--set roots.train_root=/kaggle/input/genimage-stable-diffusion-v1-4 roots.test_root=/kaggle/input/genimage-validation"
+SET = "--set roots.train_root=/kaggle/input/datasets/vtphatt2/genimage-stable-diffusion-v1-4 roots.test_root=/kaggle/input/datasets/vtphatt2/genimage-validation"
 RUNS = "/kaggle/working/runs\""""
 
 NB = {
