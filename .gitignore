@@ -13,3 +13,6 @@ __pycache__/
 # never commit dataset images
 data/raw/
 data/wild/
+# downloaded Kaggle outputs (contents are copied into results/, data/manifests/, checkpoints/)
+/fakelens_results/
+*.zip

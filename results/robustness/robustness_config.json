@@ -1,0 +1,180 @@
+{
+  "split": "test",
+  "n_images": 3200,
+  "conditions": {
+    "blur:1.0": "Gaussian blur, sigma=1.0px (PIL GaussianBlur radius)",
+    "blur:3.0": "Gaussian blur, sigma=3.0px (PIL GaussianBlur radius)",
+    "blur:5.0": "Gaussian blur, sigma=5.0px (PIL GaussianBlur radius)",
+    "clean:None": "no change",
+    "jpeg:95": "JPEG re-encode at quality=95 (PIL, 4:2:0 subsampling)",
+    "jpeg:85": "JPEG re-encode at quality=85 (PIL, 4:2:0 subsampling)",
+    "jpeg:75": "JPEG re-encode at quality=75 (PIL, 4:2:0 subsampling)",
+    "jpeg:65": "JPEG re-encode at quality=65 (PIL, 4:2:0 subsampling)",
+    "jpeg:50": "JPEG re-encode at quality=50 (PIL, 4:2:0 subsampling)",
+    "jpeg:30": "JPEG re-encode at quality=30 (PIL, 4:2:0 subsampling)",
+    "lowres:112": "bicubic resize so the shorter side = 112px (GenImage Table 5)",
+    "lowres:64": "bicubic resize so the shorter side = 64px (GenImage Table 5)",
+    "noise:0.01": "additive Gaussian noise, std=0.01 on [0,1] pixels, seeded per image",
+    "noise:0.03": "additive Gaussian noise, std=0.03 on [0,1] pixels, seeded per image",
+    "noise:0.05": "additive Gaussian noise, std=0.05 on [0,1] pixels, seeded per image",
+    "resize:0.5": "bicubic resize by scale=0.5 (both sides)",
+    "resize:0.75": "bicubic resize by scale=0.75 (both sides)",
+    "resize:1.25": "bicubic resize by scale=1.25 (both sides)",
+    "resize:1.5": "bicubic resize by scale=1.5 (both sides)",
+    "social:None": "downscale long side to 1080px (if larger) then JPEG quality 80"
+  },
+  "models": {
+    "A1": {
+      "ckpt": "/kaggle/working/runs/p1/A1/seed0/head.pt",
+      "threshold_val": 0.6228601366677381,
+      "preprocess": {
+        "mean": [
+          0.48145466,
+          0.4578275,
+          0.40821073
+        ],
+        "std": [
+          0.26862954,
+          0.26130258,
+          0.27577711
+        ],
+        "crop": 224,
+        "debias_q": 96,
+        "min_side_resize": true
+      }
+    },
+    "A2": {
+      "ckpt": "/kaggle/working/runs/p1/A2/seed0/head.pt",
+      "threshold_val": 0.9986990747710429,
+      "preprocess": {
+        "mean": [
+          0.48145466,
+          0.4578275,
+          0.40821073
+        ],
+        "std": [
+          0.26862954,
+          0.26130258,
+          0.27577711
+        ],
+        "crop": 224,
+        "debias_q": 96,
+        "min_side_resize": true
+      }
+    },
+    "A3": {
+      "ckpt": "/kaggle/working/runs/p1/A3/seed0/head.pt",
+      "threshold_val": 0.9383410636097992,
+      "preprocess": {
+        "mean": [
+          0.48145466,
+          0.4578275,
+          0.40821073
+        ],
+        "std": [
+          0.26862954,
+          0.26130258,
+          0.27577711
+        ],
+        "crop": 224,
+        "debias_q": 96,
+        "min_side_resize": true
+      }
+    },
+    "A4": {
+      "ckpt": "/kaggle/working/runs/p1/A4/seed0/head.pt",
+      "threshold_val": 0.8662679785513986,
+      "preprocess": {
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "crop": 224,
+        "debias_q": 96,
+        "min_side_resize": true
+      }
+    },
+    "B": {
+      "ckpt": "/kaggle/working/runs/p1/B/seed0/model.pt",
+      "threshold_val": 0.5282496699246566,
+      "preprocess": {
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "crop": 224,
+        "debias_q": 96,
+        "min_side_resize": true
+      }
+    },
+    "A2_raw": {
+      "ckpt": "/kaggle/working/runs/p1/A2_raw/seed0/head.pt",
+      "threshold_val": 0.9552160071439322,
+      "preprocess": {
+        "mean": [
+          0.48145466,
+          0.4578275,
+          0.40821073
+        ],
+        "std": [
+          0.26862954,
+          0.26130258,
+          0.27577711
+        ],
+        "crop": 224,
+        "debias_q": null,
+        "min_side_resize": true
+      }
+    },
+    "B_raw": {
+      "ckpt": "/kaggle/working/runs/p1/B_raw/seed0/model.pt",
+      "threshold_val": 0.6746157606917813,
+      "preprocess": {
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "crop": 224,
+        "debias_q": null,
+        "min_side_resize": true
+      }
+    },
+    "B_noaug": {
+      "ckpt": "/kaggle/working/runs/p1/B_noaug/seed0/model.pt",
+      "threshold_val": 0.7880088507982217,
+      "preprocess": {
+        "mean": [
+          0.485,
+          0.456,
+          0.406
+        ],
+        "std": [
+          0.229,
+          0.224,
+          0.225
+        ],
+        "crop": 224,
+        "debias_q": 96,
+        "min_side_resize": true
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+label,generator,error_rate,size
+1,biggan,0.966,500
+1,adm,0.954,500
+1,vqdm,0.924,500
+1,glide,0.846,500
+1,midjourney,0.462,500
+1,wukong,0.148,500
+1,sdv15,0.03,500
+1,sdv14,0.024,500
+0,biggan,0.022,500
+0,adm,0.02,500
+0,sdv14,0.018,500
+0,midjourney,0.018,500
+0,sdv15,0.018,500
+0,wukong,0.014,500
+0,glide,0.014,500
+0,vqdm,0.014,500

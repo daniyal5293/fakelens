@@ -1,0 +1,236 @@
+{
+  "shortcut_probe": {
+    "features": [
+      "is_jpeg",
+      "jpeg_quality",
+      "width",
+      "height",
+      "aspect",
+      "log_area"
+    ],
+    "per_generator": {
+      "adm": {
+        "n": 1000,
+        "threshold": 0.5,
+        "acc": 1.0,
+        "balanced_acc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "real_acc": 1.0,
+        "fake_acc": 1.0,
+        "auroc": 1.0,
+        "ap": 1.0,
+        "confusion": [
+          [
+            500,
+            0
+          ],
+          [
+            0,
+            500
+          ]
+        ]
+      },
+      "biggan": {
+        "n": 1000,
+        "threshold": 0.5,
+        "acc": 1.0,
+        "balanced_acc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "real_acc": 1.0,
+        "fake_acc": 1.0,
+        "auroc": 1.0,
+        "ap": 1.0,
+        "confusion": [
+          [
+            500,
+            0
+          ],
+          [
+            0,
+            500
+          ]
+        ]
+      },
+      "glide": {
+        "n": 1000,
+        "threshold": 0.5,
+        "acc": 1.0,
+        "balanced_acc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "real_acc": 1.0,
+        "fake_acc": 1.0,
+        "auroc": 1.0,
+        "ap": 1.0,
+        "confusion": [
+          [
+            500,
+            0
+          ],
+          [
+            0,
+            500
+          ]
+        ]
+      },
+      "midjourney": {
+        "n": 1000,
+        "threshold": 0.5,
+        "acc": 1.0,
+        "balanced_acc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "real_acc": 1.0,
+        "fake_acc": 1.0,
+        "auroc": 1.0,
+        "ap": 1.0,
+        "confusion": [
+          [
+            500,
+            0
+          ],
+          [
+            0,
+            500
+          ]
+        ]
+      },
+      "sdv14": {
+        "n": 1000,
+        "threshold": 0.5,
+        "acc": 1.0,
+        "balanced_acc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "real_acc": 1.0,
+        "fake_acc": 1.0,
+        "auroc": 1.0,
+        "ap": 1.0,
+        "confusion": [
+          [
+            500,
+            0
+          ],
+          [
+            0,
+            500
+          ]
+        ]
+      },
+      "sdv15": {
+        "n": 1000,
+        "threshold": 0.5,
+        "acc": 1.0,
+        "balanced_acc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "real_acc": 1.0,
+        "fake_acc": 1.0,
+        "auroc": 1.0,
+        "ap": 1.0,
+        "confusion": [
+          [
+            500,
+            0
+          ],
+          [
+            0,
+            500
+          ]
+        ]
+      },
+      "vqdm": {
+        "n": 1000,
+        "threshold": 0.5,
+        "acc": 1.0,
+        "balanced_acc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "real_acc": 1.0,
+        "fake_acc": 1.0,
+        "auroc": 1.0,
+        "ap": 1.0,
+        "confusion": [
+          [
+            500,
+            0
+          ],
+          [
+            0,
+            500
+          ]
+        ]
+      },
+      "wukong": {
+        "n": 1000,
+        "threshold": 0.5,
+        "acc": 1.0,
+        "balanced_acc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "real_acc": 1.0,
+        "fake_acc": 1.0,
+        "auroc": 1.0,
+        "ap": 1.0,
+        "confusion": [
+          [
+            500,
+            0
+          ],
+          [
+            0,
+            500
+          ]
+        ]
+      }
+    },
+    "all": {
+      "n": 8000,
+      "threshold": 0.5,
+      "acc": 1.0,
+      "balanced_acc": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "real_acc": 1.0,
+      "fake_acc": 1.0,
+      "auroc": 1.0,
+      "ap": 1.0,
+      "confusion": [
+        [
+          4000,
+          0
+        ],
+        [
+          0,
+          4000
+        ]
+      ]
+    },
+    "is_not_jpeg_rule_train_acc": 1.0,
+    "is_not_jpeg_rule_test_acc": 1.0
+  },
+  "debias_verification": {
+    "n_checked": 64,
+    "model_input_sizes": [
+      [
+        224,
+        224
+      ]
+    ],
+    "jpeg_quality_after_debias": [
+      96
+    ],
+    "debias_q": 96
+  }
+}
