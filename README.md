@@ -140,6 +140,8 @@ python -m fakelens.analysis.plots --results results --runs runs
 
 ## Results
 
+> **Re-run pending.** In this run, the CLIP backbones (A1–A3) were loaded with standard GELU instead of the QuickGELU activation the OpenAI weights were trained with. This is now fixed in `features/backbones.py`. The A1–A3 numbers below will be replaced after the next full run. B (ResNet), A4 (DINOv2) and the data audit are unaffected.
+
 All numbers are from one full Kaggle run (Tesla T4, about 6 h). Full tables are in [results/p1/summary.md](results/p1/summary.md), and all figures are in [results/figures/](results/figures/).
 
 ### P1: train on SD v1.4, test on 8 generators

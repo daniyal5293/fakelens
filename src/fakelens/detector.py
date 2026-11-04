@@ -3,6 +3,7 @@ explainability and the Gradio demo, so preprocessing always matches what the mod
 """
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -10,7 +11,7 @@ import torch
 from PIL import Image
 
 from fakelens.data.transforms import Preprocess
-from fakelens.features.backbones import Backbone, build_backbone
+from fakelens.features.backbones import BACKBONE_VERSION, Backbone, build_backbone
 from fakelens.models.heads import build_head
 from fakelens.models.resnet import ResNet18Detector
 
@@ -39,6 +40,10 @@ class Detector:
         self.layer_weights = ck.get("layer_weights")
         if self.kind == "head":
             self.backbone_name = ck["backbone"]
+            want, got = BACKBONE_VERSION.get(self.backbone_name), ck.get("backbone_version")
+            if want != got:
+                warnings.warn(f"{ckpt_path}: head was trained on backbone '{got or 'unknown (old checkpoint)'}' "
+                              f"but '{want}' is loaded now - predictions will be unreliable. Retrain the head.")
             self.backbone = get_backbone(self.backbone_name, self.device)
             self.head = build_head(ck["head"], ck["n_layers"], ck["dim"], ck["embed_dim"], **ck["head_kwargs"])
             self.head.load_state_dict(ck["state_dict"])

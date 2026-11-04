@@ -106,11 +106,23 @@ class DummyBackbone(Backbone):
         return {"cls": cls, "embed": self.proj(cls[:, -1])}
 
 
+# Bumped whenever a registry name starts meaning a different network. Head checkpoints store it, so a
+# head trained on old features is never silently paired with a new backbone (see detector.py).
+BACKBONE_VERSION = {
+    "clip_vitl14": "ViT-L-14-quickgelu/openai",
+    "clip_vitb16": "ViT-B-16-quickgelu/openai",
+    "dinov2_vitl14": "dinov2_vitl14/torchhub",
+    "dummy": "dummy",
+}
+
+
 def build_backbone(name: str) -> Backbone:
+    # The OpenAI CLIP weights were trained with QuickGELU; the plain "ViT-L-14" config uses nn.GELU,
+    # which silently changes every block's activation. The "-quickgelu" configs match the original model.
     if name == "clip_vitl14":
-        return OpenCLIPBackbone("ViT-L-14", "openai", name)
+        return OpenCLIPBackbone("ViT-L-14-quickgelu", "openai", name)
     if name == "clip_vitb16":
-        return OpenCLIPBackbone("ViT-B-16", "openai", name)
+        return OpenCLIPBackbone("ViT-B-16-quickgelu", "openai", name)
     if name == "dinov2_vitl14":
         return DINOv2Backbone("dinov2_vitl14", name)
     if name == "dummy":

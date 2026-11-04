@@ -31,6 +31,7 @@ from sklearn.metrics import roc_auc_score
 
 from fakelens.data.manifest import load_manifest
 from fakelens.evaluate import finalize_run
+from fakelens.features.backbones import BACKBONE_VERSION
 from fakelens.features.extract import feature_dir, load_meta, load_split
 from fakelens.metrics import compute_metrics, group_report, sigmoid
 from fakelens.models.heads import build_head
@@ -147,6 +148,7 @@ class HeadExperiment:
     def save_checkpoint(self, head, path: Path, T: float, thr: float, extra: dict | None = None):
         torch.save({
             "kind": "head", "model": self.model, "backbone": self.backbone, "head": self.head_kind,
+            "backbone_version": BACKBONE_VERSION.get(self.backbone),
             "head_kwargs": {k: v for k, v in self.hp.items() if k in ("hidden", "dropout")},
             "n_layers": self.meta["n_layers"], "dim": self.meta["dim"], "embed_dim": self.meta["embed_dim"],
             "preprocess": self.meta["preprocess"], "state_dict": head.state_dict(),
