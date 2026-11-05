@@ -26,7 +26,7 @@
   "models": {
     "A1": {
       "ckpt": "/kaggle/working/runs/p1/A1/seed0/head.pt",
-      "threshold_val": 0.6228601366677381,
+      "threshold_val": 0.5843160340254775,
       "preprocess": {
         "mean": [
           0.48145466,
@@ -45,7 +45,7 @@
     },
     "A2": {
       "ckpt": "/kaggle/working/runs/p1/A2/seed0/head.pt",
-      "threshold_val": 0.9986990747710429,
+      "threshold_val": 0.9781896101123819,
       "preprocess": {
         "mean": [
           0.48145466,
@@ -64,7 +64,7 @@
     },
     "A3": {
       "ckpt": "/kaggle/working/runs/p1/A3/seed0/head.pt",
-      "threshold_val": 0.9383410636097992,
+      "threshold_val": 0.8772522349507811,
       "preprocess": {
         "mean": [
           0.48145466,
@@ -83,7 +83,7 @@
     },
     "A4": {
       "ckpt": "/kaggle/working/runs/p1/A4/seed0/head.pt",
-      "threshold_val": 0.8662679785513986,
+      "threshold_val": 0.8603587081651982,
       "preprocess": {
         "mean": [
           0.485,
@@ -121,7 +121,7 @@
     },
     "A2_raw": {
       "ckpt": "/kaggle/working/runs/p1/A2_raw/seed0/head.pt",
-      "threshold_val": 0.9552160071439322,
+      "threshold_val": 0.9776920889175302,
       "preprocess": {
         "mean": [
           0.48145466,

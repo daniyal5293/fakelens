@@ -140,21 +140,19 @@ python -m fakelens.analysis.plots --results results --runs runs
 
 ## Results
 
-> **Re-run pending.** In this run, the CLIP backbones (A1–A3) were loaded with standard GELU instead of the QuickGELU activation the OpenAI weights were trained with. This is now fixed in `features/backbones.py`. The A1–A3 numbers below will be replaced after the next full run. B (ResNet), A4 (DINOv2) and the data audit are unaffected.
-
-All numbers are from one full Kaggle run (Tesla T4, about 6 h). Full tables are in [results/p1/summary.md](results/p1/summary.md), and all figures are in [results/figures/](results/figures/).
+All numbers are from one full Kaggle run (Tesla T4, about 6 h). The CLIP backbones use the original QuickGELU activation. Full tables are in [results/p1/summary.md](results/p1/summary.md), and all figures are in [results/figures/](results/figures/). B and A4 gave exactly the same numbers in two independent runs, which confirms that the pipeline is reproducible.
 
 ### P1: train on SD v1.4, test on 8 generators
-Threshold 0.5. Mean of 3 seeds; the standard deviation is ≤ 0.04 everywhere (see `summary.md`). *Unseen* is the mean over Midjourney, ADM, GLIDE, Wukong, VQDM and BigGAN.
+Threshold 0.5. Mean of 3 seeds; the standard deviation is ≤ 0.03 everywhere except "A2 without debias" (see `summary.md`). *Unseen* is the mean over Midjourney, ADM, GLIDE, Wukong, VQDM and BigGAN.
 
 | Model | SD v1.4 acc | Unseen acc | **Unseen AUROC** | Unseen fake acc |
 |---|---|---|---|---|
-| A1 CLIP-L/14 linear (UnivFD-style) | 0.966 | **0.764** | 0.883 | 0.602 |
-| **A2 CLIP-L/14 multi-layer** | **0.999** | 0.711 | **0.964** | 0.426 |
-| A3 CLIP-B/16 multi-layer | 0.997 | 0.733 | 0.956 | 0.475 |
-| A4 DINOv2-L/14 multi-layer | 0.997 | 0.719 | 0.951 | 0.444 |
+| A1 CLIP-L/14 linear (UnivFD-style) | 0.961 | **0.756** | 0.892 | 0.580 |
+| **A2 CLIP-L/14 multi-layer** | 0.996 | 0.721 | **0.963** | 0.448 |
+| A3 CLIP-B/16 multi-layer | 0.995 | 0.731 | 0.949 | 0.470 |
+| A4 DINOv2-L/14 multi-layer | **0.997** | 0.722 | 0.951 | 0.451 |
 | B ResNet-18 (fine-tuned) | 0.980 | 0.637 | 0.799 | 0.297 |
-| A2 without debias † | 0.998 | 0.810 | 0.985 | 0.623 |
+| A2 without debias † | 0.998 | 0.852 ± 0.061 | 0.990 | 0.708 |
 | B without debias † (1 seed) | 0.986 | 0.640 | 0.817 | 0.294 |
 | B without augmentation (1 seed) | 0.990 | 0.638 | 0.808 | 0.293 |
 
@@ -162,35 +160,48 @@ Threshold 0.5. Mean of 3 seeds; the standard deviation is ≤ 0.04 everywhere (s
 
 ### Leave-one-generator-out (P2)
 Train on 7 generators and test on the held-out one. Accuracy at threshold 0.5, mean over the 8 folds:
-* A2: **0.933**. The worst fold is BigGAN at 0.670, even though its AUROC is 0.986.
-* A1: 0.889.
+* A2: **0.950**. The worst folds are BigGAN at 0.809 (its AUROC is 0.996) and Midjourney at 0.882.
+* A1: 0.903.
 * B: 0.812.
 
 ### Key findings
 1. **Multi-layer frozen CLIP features separate real from fake far better than a fine-tuned CNN.**
-   * Unseen AUROC: A2 0.964, B 0.799. McNemar on seed 0 gives p < 10⁻⁴⁰; the bootstrap 95% CI of the accuracy gap is [+5.0, +6.7] points.
-   * A2 beats A1 (0.883), so the intermediate blocks matter.
-   * The layer probe peaks at block 17 of 24 (ViT-L/14) and block 9 of 12 (ViT-B/16), with the final layer clearly lower ([layers_clip_vitl14.png](results/figures/layers_clip_vitl14.png)).
+   * Unseen AUROC: A2 0.963, B 0.799.
+   * Paired comparison on seed 0: unseen accuracy is 0.723 for A2 and 0.633 for B. McNemar gives p = 4 × 10⁻⁸⁸, and the bootstrap 95% CI of the gap is [+8.1, +9.9] points.
+   * A2 beats the final-embedding linear probe A1 on AUROC (0.892), so the intermediate blocks matter.
+   * The layer probe peaks in the middle of each network, not at the final layer ([layers_clip_vitl14.png](results/figures/layers_clip_vitl14.png)):
+
+     | Backbone | Best block (unseen AUROC) | Final block |
+     |---|---|---|
+     | CLIP ViT-L/14 | block 13 of 24 (0.968) | 0.940 |
+     | CLIP ViT-B/16 | block 9 of 12 (0.955) | 0.928 |
+     | DINOv2 ViT-L/14 | block 19 of 24 (0.945) | 0.871 |
 2. **On unseen generators the failure is a threshold shift, not a lack of separability.**
-   * A2 keeps 99.6% real accuracy, but its unseen fake accuracy is only 43%, at an AUROC of 0.964.
-   * The data-efficiency curve shows this directly. As A2 gets more SD v1.4 training data, unseen AUROC *rises* (0.93 → 0.97) while unseen accuracy at 0.5 *falls* (0.81 → 0.69). The head becomes more confident in what counts as "SD-fake".
-   * So accuracy alone (as in the proposal) would rank A1 above A2. AUROC shows the opposite.
+   * A2 keeps 99.5% real accuracy, but its unseen fake accuracy is only 45%, at an AUROC of 0.963.
+   * The data-efficiency curve shows this directly. As A2 gets more SD v1.4 training data (100 → 10k images), unseen AUROC stays at about 0.96 while unseen accuracy at 0.5 *falls* (0.82 → 0.73). The extra data only makes the head more confident about what counts as "SD-fake". For A1, both numbers rise.
+   * So accuracy alone (as in the proposal) ranks A1 above A2 (0.756 vs 0.723 on seed 0, McNemar p = 1 × 10⁻¹⁰). AUROC shows the opposite.
 3. **A few images fix it.**
-   * Adding k images of the unseen generator to the head's training set raises A2's accuracy on it from 0.71 to 0.84 at k=64 and to 0.95 at k=256 (mean of 6 generators).
-   * BigGAN goes from 0.50 to 0.96 with 64 images.
+   * Adding k images of the unseen generator to the head's training set raises A2's accuracy on that generator from 0.73 to 0.85 at k=64 and to 0.94 at k=256 (mean of 6 generators and 3 seeds).
+   * BigGAN goes from 0.51 to 0.89 at k=64 and to 0.98 at k=256.
    * A1's linear head barely moves (0.76 → 0.79). See [fewshot.png](results/figures/fewshot.png).
 4. **The GenImage format shortcut is real, and debiasing is what makes the result trustworthy.**
    * A metadata-only classifier (file format and size, no pixels) scores **100%** on every generator ([results/audit](results/audit)).
-   * The model trained on raw files looks better on the raw test set (row †), but that advantage is a format cue. Once fakes are JPEG-compressed like the reals, it drops sharply. At JPEG 95, SD v1.4 accuracy is 0.82 for the raw-trained A2 against 0.99 for the debiased A2. After the social-media chain it is 0.59 against 0.78.
-5. **Robustness.**
-   * Under JPEG, the debiased CLIP heads keep a high AUROC (A2 on SD v1.4: 0.98 at quality 30), but their accuracy falls because the threshold moves.
+   * The model trained on raw files looks better on the raw test set (row †), but that advantage is a format cue, and it is unstable across seeds (± 0.06). Once fakes are JPEG-compressed like the reals, it drops sharply.
+
+     | Condition (SD v1.4, validation threshold) | Raw-trained A2 | Debiased A2 |
+     |---|---|---|
+     | JPEG 95 | 0.71 | 0.99 |
+     | Social-media chain | 0.55 | 0.78 |
+5. **Robustness** ([robustness_unseen_auroc.png](results/figures/robustness_unseen_auroc.png), validation threshold).
+   * Under JPEG, the debiased CLIP heads keep a high AUROC (A2 on SD v1.4: 0.98 at quality 30), but their accuracy falls to 0.65 because the threshold moves.
    * The ResNet trained with JPEG augmentation keeps its accuracy best (0.93 at quality 30). Without augmentation it collapses (0.53), which shows that augmentation is what protects the CNN.
+   * After the social-media chain, A2 still ranks unseen fakes best (AUROC 0.93, against 0.75 for B).
    * Downscaling to 64 px and strong blur hurt every model.
-   * DINOv2 (A4) is the most noise-robust (unseen AUROC 0.91 at σ = 0.05 vs 0.75 for A2). CLIP's language supervision is not essential: DINOv2 comes within 0.013 AUROC of CLIP.
+   * DINOv2 (A4) is the most noise-robust (unseen AUROC 0.91 at σ = 0.05, against 0.81 for A2). CLIP's language supervision is not essential: DINOv2 comes within 0.012 AUROC of CLIP overall.
 6. **Hardest generators.**
-   * BigGAN, the only GAN and the only 128 px source, is the hardest case: A2 misclassifies 99% of its fakes at threshold 0.5, even though its AUROC is 0.92. ADM and GLIDE are next.
+   * BigGAN, the only GAN and the only 128 px source, is the hardest case: A2 misclassifies 97% of its fakes at threshold 0.5, even though its AUROC is 0.93. ADM (82%) and GLIDE (76%) are next.
    * This matches the upscaling caveat in [Limitations](#limitations-and-responsible-use).
-   * Wukong, which is close to Stable Diffusion, is almost solved (2% error).
+   * Wukong, which is close to Stable Diffusion, is almost solved (1.6% error).
 
 ## Limitations and responsible use
 
