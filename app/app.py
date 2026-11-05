@@ -29,6 +29,15 @@ DISCLAIMER = (
 )
 
 
+# Decision rule. The probabilities are temperature-calibrated on validation data, so 0.5 is the natural cut-off.
+# The validation-optimal threshold ("val") is tuned on SD v1.4 only and transfers worse to other generators
+# (README, finding 2: A2 unseen accuracy 0.67 at the val threshold vs 0.72 at 0.5), so it is not the default.
+THRESHOLD_MODE = "0.5"
+THRESHOLD_NOTE = ("\n*How to read this:* the bars show each model's calibrated probability that the image is AI-generated. "
+                  "Both models were trained only on Stable Diffusion v1.4, so on images from newer generators, or images "
+                  "that were screenshotted, resized or re-compressed, the probability often stays low even for fakes.")
+
+
 def build_app(dets: dict):
     import gradio as gr
 
@@ -40,12 +49,14 @@ def build_app(dets: dict):
             img = make_perturbation("resize", scale)[0](img, None)
         if jpeg_q < 100:
             img = make_perturbation("jpeg", int(jpeg_q))[0](img, None)
-        scores, lines, heat_img = {}, [], None
+        scores, lines, heat_img, verdicts = {}, [], None, set()
         for name, d in dets.items():
             p = d.predict_pil(img)
-            scores[f"{name}: AI-generated"] = p
-            verdict = "AI-generated" if p >= d.threshold else "Real"
-            lines.append(f"- **{name}**: P(AI-generated) = {p:.1%} → *{verdict}* (decision threshold {d.threshold:.2f})")
+            thr = d.threshold if THRESHOLD_MODE == "val" else 0.5
+            verdict = "AI-generated" if p >= thr else "Real"
+            verdicts.add(verdict)
+            scores[name] = p
+            lines.append(f"- **{name}**: P(AI-generated) = {p:.1%} → *{verdict}* (decision threshold {thr:.2f})")
         if explain:
             d = dets.get("ResNet-18") or next(iter(dets.values()))
             x = d.preprocess(img).unsqueeze(0).to(d.device)
@@ -54,8 +65,8 @@ def build_app(dets: dict):
                 heat_img = overlay(rgb, gradcam_resnet(d.net, x), symmetric=False)
             else:
                 heat_img = overlay(rgb, occlusion_map(d.prob_fn(), x, patch=56, stride=28, batch=16))
-        agree = len({s >= 0.5 for s in scores.values()}) == 1
-        lines.append("\nModels agree." if agree else "\n⚠️ The models disagree. Treat this result as uncertain.")
+        lines.append("\nModels agree." if len(verdicts) == 1 else "\n⚠️ The models disagree. Treat this result as uncertain.")
+        lines.append(THRESHOLD_NOTE)
         return scores, heat_img, "\n".join(lines)
 
     with gr.Blocks(title="FakeLens") as demo:
@@ -81,7 +92,11 @@ def main():
     ap.add_argument("--clip", default=os.environ.get("FAKELENS_CLIP_CKPT", "checkpoints/A2_head.pt"))
     ap.add_argument("--resnet", default=os.environ.get("FAKELENS_RESNET_CKPT", "checkpoints/B_model.pt"))
     ap.add_argument("--share", action="store_true")
+    ap.add_argument("--threshold", choices=["0.5", "val"], default="0.5",
+                    help="decision rule: 0.5 on the calibrated probability (default) or the SD-v1.4 validation threshold")
     args = ap.parse_args()
+    global THRESHOLD_MODE
+    THRESHOLD_MODE = args.threshold
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dets = {}
     if Path(args.clip).exists():
