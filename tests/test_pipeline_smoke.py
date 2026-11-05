@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import torch
 
 from fakelens.data.manifest import build_manifest
 
@@ -42,6 +43,10 @@ def test_head_experiments(ready):
     assert not exp.data_eff([8, 28], [0]).empty
     assert not exp.fewshot([0, 4], [0]).empty
     assert len(exp.layer_probe(0).layer.unique()) == 4
+    a8 = exp.all8([0])
+    assert set(a8[a8.scope == "per_generator"].name) == set(ready["data"]["generators"])
+    ck = torch.load(Path(ready["paths"]["runs"]) / "all8" / "D0" / "seed0" / "head.pt", weights_only=False)
+    assert ck["trained_on"] == "all8" and ck["backbone_version"] == "dummy"
 
 
 def test_resnet_robustness_aggregate_plots(ready, tmp_path):

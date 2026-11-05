@@ -13,6 +13,7 @@ Experiments
     fewshot      add k images of an unseen generator to training
     layer_probe  linear probe on each single layer's CLS token (which depth carries forensic signal?)
     shuffle      sanity check: shuffled training labels -> ~50%
+    all8         deployment model for the demo: train on all 8 generators (not comparable to P1)
 
     python -m fakelens.train_head --model A2 --experiment p1
     python -m fakelens.train_head --model A2 --experiment p1 --raw      # trained on non-debiased features
@@ -209,6 +210,50 @@ class HeadExperiment:
         print(df.groupby(["thr", "heldout"])[["acc", "auroc"]].mean().round(3))
         return df
 
+    # ---- deployment model: train on ALL 8 generators (for the demo, not comparable to P1)
+    def all8(self, seeds: list[int]) -> pd.DataFrame:
+        """Train on the LOGO pools of all 8 generators (1000 real + 1000 fake each), validate on a held-out 10%
+        of every generator's pool (stratified by generator and label), test on the usual test split.
+
+        LOGO showed that more training generators generalise best, so this is the model the demo should use.
+        Every test generator is *seen* here, so these numbers measure in-distribution performance across 8
+        generators and must not be compared with P1's unseen-generator numbers.
+        """
+        pool, te = self.split("logo", "clean"), self.split("test", "clean")
+        gens = pool["df"].generator.to_numpy()
+        rows = []
+        for seed in seeds:
+            rng = np.random.default_rng(seed)
+            va_idx, tr_idx = [], []
+            for g in np.unique(gens):
+                for lab in (0, 1):
+                    idx = rng.permutation(np.where((gens == g) & (pool["y"] == lab))[0])
+                    n_va = max(1, int(round(0.1 * len(idx))))
+                    va_idx.append(idx[:n_va]); tr_idx.append(idx[n_va:])
+            va_idx, tr_idx = np.concatenate(va_idx), np.concatenate(tr_idx)
+            head, hist = fit_head(self.new_head(), self.X(pool, tr_idx), pool["y"][tr_idx],
+                                  self.X(pool, va_idx), pool["y"][va_idx],
+                                  self.hp, self.batch_size, self.patience, self.device, seed)
+            run = ensure_dir(self.runs / "all8" / self.tag / f"seed{seed}")
+            val = self._pred_frame(pool, predict_head(head, self.X(pool, va_idx), self.device), va_idx)
+            test = self._pred_frame(te, predict_head(head, self.X(te), self.device))
+            res = finalize_run(run, self.tag, val, test, self.groups, self.cfg["experiments"]["bootstrap"],
+                               extra={"seed": seed, "experiment": "all8", "n_train": int(len(tr_idx))})
+            head.temperature.fill_(res["temperature"])
+            extra = {"trained_on": "all8"}
+            if hasattr(head, "layer_weights"):
+                extra["layer_weights"] = head.layer_weights().detach().cpu().numpy().tolist()
+            self.save_checkpoint(head, run / "head.pt", res["temperature"], res["threshold_val"], extra)
+            save_json(hist, run / "history.json")
+            for kind in ("per_generator", "groups"):
+                for name, m in res["test@0.5"][kind].items():
+                    rows.append({"model": self.tag, "seed": seed, "scope": kind, "name": name,
+                                 **{k: m[k] for k in ("acc", "auroc", "real_acc", "fake_acc", "f1")}})
+        df = pd.DataFrame(rows)
+        df.to_csv(ensure_dir(self.results / "all8") / f"all8_{self.tag}.csv", index=False)
+        print(df.groupby(["scope", "name"])[["acc", "auroc", "fake_acc"]].mean().round(3))
+        return df
+
     # ---- data efficiency
     def data_eff(self, sizes: list[int], seeds: list[int]) -> pd.DataFrame:
         tr, va, te = self.split("train"), self.split("val", "clean"), self.split("test", "clean")
@@ -296,7 +341,7 @@ def main(argv=None):
     ap.add_argument("--config", default="configs/default.yaml")
     ap.add_argument("--model", required=True, choices=list(HEAD_MODELS))
     ap.add_argument("--experiment", default="p1",
-                    choices=["p1", "logo", "data_eff", "fewshot", "layer_probe", "shuffle"])
+                    choices=["p1", "logo", "data_eff", "fewshot", "layer_probe", "shuffle", "all8"])
     ap.add_argument("--raw", action="store_true", help="use features extracted without debiasing")
     ap.add_argument("--seeds", type=int, nargs="*", default=None)
     ap.add_argument("--set", nargs="*", default=[])
@@ -317,6 +362,8 @@ def main(argv=None):
         exp.fewshot(e["fewshot_k"], seeds)
     elif args.experiment == "layer_probe":
         exp.layer_probe(seeds[0])
+    elif args.experiment == "all8":
+        exp.all8(seeds)
 
 
 if __name__ == "__main__":

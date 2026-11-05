@@ -113,6 +113,28 @@ NB = {
                  "assert 'Done. Tables' in log, 'Pipeline stopped early - read the last lines of run_all.log above'\n"
                  "print('Pipeline finished OK')"),
     ],
+    "07_all8_demo_model": [
+        ("md", "# 07 · Demo model trained on all 8 generators\n"
+               "Leave-one-generator-out showed that training on more generators generalises best "
+               "(A2 detects a never-seen 8th generator with 95% accuracy). This notebook trains A2's head on "
+               "**all 8** GenImage generators for the demo. The report keeps the official SD v1.4-only protocol (P1).\n\n"
+               "Run with **Save Version → Save & Run All (Commit)**. Download `fakelens_all8.zip` from the Output tab."),
+        ("code", SETUP), ("code", ROOTS),
+        ("code", "# Use the committed manifest (identical splits to the main run); build it only if it is missing\n"
+                 "import os\n"
+                 "if not os.path.exists('data/manifests/manifest.csv'):\n"
+                 "    !python -m fakelens.data.manifest --config $CFG $SET\n"
+                 "!wc -l data/manifests/manifest.csv"),
+        ("code", "# CLIP ViT-L/14 features for the 8 generator pools and the test split (no SD v1.4 train split needed)\n"
+                 "!python -m fakelens.features.extract --config $CFG $SET --backbone clip_vitl14 --splits logo test"),
+        ("code", "!python -m fakelens.train_head --config $CFG $SET --model A2 --experiment all8"),
+        ("code", "!mkdir -p checkpoints && cp $RUNS/all8/A2/seed0/head.pt checkpoints/A2_all8_head.pt\n"
+                 "!cd /kaggle/working/fakelens && zip -qr /kaggle/working/fakelens_all8.zip results/all8 checkpoints/A2_all8_head.pt\n"
+                 "!ls -lh /kaggle/working/fakelens_all8.zip"),
+        ("code", "import os\n"
+                 "assert os.path.exists('/kaggle/working/fakelens_all8.zip'), 'Something failed - read the output above'\n"
+                 "print('Done')"),
+    ],
     "06_demo": [
         ("md", "# 06 · Gradio demo\nCopies the A2 and B checkpoints to `checkpoints/` and launches a public share link."),
         ("code", SETUP), ("code", ROOTS),
