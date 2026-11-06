@@ -164,6 +164,18 @@ Train on 7 generators and test on the held-out one. Accuracy at threshold 0.5, m
 * A1: 0.903.
 * B: 0.812.
 
+### Demo model: A2 trained on all 8 generators (A2-all8)
+Leave-one-generator-out shows that more training generators generalise best, so the demo's main model trains A2's head on the pools of all 8 generators: 1,000 real and 1,000 fake images each, with 10% of every pool held out for validation (`--experiment all8`, [notebook 07](notebooks/07_all8_demo_model.ipynb), about 13 minutes on Kaggle). Mean of 3 seeds, threshold 0.5:
+
+| | All 8 | SD v1.4 | Midjourney | ADM | GLIDE | Wukong | VQDM | BigGAN |
+|---|---|---|---|---|---|---|---|---|
+| Accuracy | **0.993** | 0.996 | 0.992 | 0.985 | 0.994 | 0.994 | 0.991 | 1.000 |
+| Fake accuracy | 0.995 | 1.000 | 0.990 | 0.985 | 0.998 | 0.993 | 0.997 | 1.000 |
+
+**These numbers are not comparable with P1.** Every test generator is *seen* during training, so they show that one frozen-CLIP head can cover all 8 generators at once. They say nothing about generators released later.
+
+The honest estimate for a truly new generator is the leave-one-generator-out accuracy of **0.950** above. P1 (SD v1.4 only) stays the official result of this project. Results: [results/all8/all8_A2.csv](results/all8/all8_A2.csv).
+
 ### Key findings
 1. **Multi-layer frozen CLIP features separate real from fake far better than a fine-tuned CNN.**
    * Unseen AUROC: A2 0.963, B 0.799.

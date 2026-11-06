@@ -16,3 +16,4 @@ data/wild/
 # downloaded Kaggle outputs (contents are copied into results/, data/manifests/, checkpoints/)
 /fakelens_results/
 *.zip
+/fakelens_all8/
