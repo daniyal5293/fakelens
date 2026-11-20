@@ -25,11 +25,13 @@ PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6
 MODEL_COLORS = {
     "A2": PALETTE[0], "B": PALETTE[1], "A1": PALETTE[2], "A3": PALETTE[3], "A4": PALETTE[4],
     "A2_raw": PALETTE[6], "B_raw": PALETTE[7], "B_noaug": PALETTE[5],
+    "A2-all8": PALETTE[6],  # never plotted together with A2_raw (wild/demo figures only)
 }
 MODEL_LABELS = {
     "A1": "A1 CLIP-L/14 linear", "A2": "A2 CLIP-L/14 multi-layer", "A3": "A3 CLIP-B/16 multi-layer",
     "A4": "A4 DINOv2-L/14 multi-layer", "B": "B ResNet-18", "A2_raw": "A2 (no debias)",
     "B_raw": "B (no debias)", "B_noaug": "B (no aug)",
+    "A2-all8": "A2-all8 CLIP-L/14, trained on all 8 generators",
 }
 CLASS_COLORS = {"real": PALETTE[0], "fake": PALETTE[1]}
 

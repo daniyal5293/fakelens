@@ -108,6 +108,19 @@ python -m fakelens.train_resnet --experiment p1                    # baseline (3
 python -m fakelens.robustness --ckpts runs/p1/A2/seed0/head.pt runs/p1/B/seed0/model.pt --names A2 B
 python -m fakelens.evaluate aggregate --runs runs/p1 --out results/p1
 python -m fakelens.analysis.plots --results results --runs runs
+python -m fakelens.train_head --model A2 --experiment all8         # demo model on all 8 generators (notebook 07)
+```
+
+### In-the-wild test (local CPU, about 10 min)
+
+1. Put images in `data/wild/real/<subset>/` and `data/wild/fake/<generator>/`. This folder is git-ignored; never commit personal photos.
+2. Log every image in `data/wild_sources.csv`.
+3. Run:
+
+```bash
+python -m fakelens.wild_eval --wild data/wild \
+    --ckpts checkpoints/A2_all8_head.pt checkpoints/A2_head.pt checkpoints/B_model.pt \
+    --names A2-all8 A2 B --conditions clean social --out results/wild
 ```
 
 ## Evaluation protocol
@@ -215,6 +228,59 @@ The honest estimate for a truly new generator is the leave-one-generator-out acc
    * This matches the upscaling caveat in [Limitations](#limitations-and-responsible-use).
    * Wukong, which is close to Stable Diffusion, is almost solved (1.6% error).
 
+### In the wild: new generators and our own phone photos
+**Test set (250 images).** Every image is outside GenImage. Provenance for each one is in [data/wild_sources.csv](data/wild_sources.csv); the images themselves are not redistributed.
+* **100 real photos from team members' phones:**
+  * 35 camera originals (JPEG quality ≈ 96, about 4000 px);
+  * 65 WhatsApp copies (re-compressed to JPEG quality ≈ 69, 1600 px).
+* **150 AI-generated images from six 2025–2026 generators** (25 each, one image per prompt, original files). They come from the test split of [OpenFake](https://huggingface.co/datasets/ComplexDataLab/OpenFake) (CC BY-NC 4.0):
+  * GPT-image-1.5;
+  * Midjourney v7;
+  * FLUX.2 klein;
+  * Seedream 5;
+  * Z-Image Turbo;
+  * Illustrious (SDXL-based).
+
+Each image is scored as the original file and after a simulated social-media upload (long side 1080 px, then JPEG 80). The evaluation runs on a laptop CPU in about 10 minutes: `python -m fakelens.wild_eval` (see [Reproducing](#reproducing)).
+
+![In-the-wild accuracy](results/wild/wild_accuracy.png)
+
+**Original files, accuracy at threshold 0.5** (full table: [results/wild/wild_summary.md](results/wild/wild_summary.md)):
+
+| | A2-all8 | A2 | B |
+|---|---|---|---|
+| All 250 images: accuracy / AUROC | 0.58 / **0.63** | 0.56 / 0.60 | 0.52 / 0.49 |
+| Fakes detected: Z-Image Turbo, Midjourney v7, Illustrious | **0.96, 0.80, 0.80** | 0.72, 0.40, 0.40 | 0.48, 0.24, 0.68 |
+| Fakes detected: FLUX.2, GPT-image-1.5, Seedream 5 | 0.36, 0.36, 0.12 | 0.40, 0.24, 0.12 | 0.00, 0.20, 0.12 |
+| Real camera originals called real | 0.20 | 0.54 | **0.83** |
+| Real WhatsApp copies called real | 0.80 | **1.00** | 0.88 |
+
+**What this shows.**
+1. **Lab accuracy does not transfer to the wild.**
+   * On GenImage, A2's unseen-generator AUROC was 0.96, and the all-8 model scored 0.99 accuracy. Here the best AUROC is 0.63, and ResNet is at chance (0.49).
+   * The generators are two years newer, and the real photos come from phones instead of ImageNet.
+   * Training on more generators still helps: A2-all8 beats A2 on four of the six new generators.
+2. **After a social-media upload, almost everything is called real.**
+   * A2-all8 detects at most 8% of any generator's fakes, while 97–100% of real photos are still called real.
+   * Downscaling plus JPEG wipes out the traces the detectors use. This matches the GenImage robustness results above, in a harsher form.
+3. **The models partly read *how an image was compressed*, not *how it was made*.**
+   * The model's P(fake) rises with the file's original JPEG quality within each class: Spearman ρ = 0.62 for real photos and 0.44 for fakes.
+   * This is the double-compression bias listed under [Limitations](#limitations-and-responsible-use). GenImage's reals are JPEGs and become *double*-compressed after our quality-96 re-encode, while its fakes start as PNGs and are compressed *once*. A camera original, compressed once at high quality, therefore looks like a debiased GenImage *fake*.
+   * A controlled test on the same 35 real camera photos confirms the cause. One property was changed at a time ([camera_compression_test.csv](results/wild/camera_compression_test.csv)):
+
+     | Same 35 real photos | A2-all8 says "fake" | A2 says "fake" | B says "fake" |
+     |---|---|---|---|
+     | original (q ≈ 96, ≈ 4000 px) | 0.80 | 0.46 | 0.17 |
+     | only re-compressed to JPEG 69 | **0.11** | 0.51 | 0.11 |
+     | only shrunk to 1600 px (JPEG 96) | 0.29 | **0.06** | 0.14 |
+     | both (WhatsApp-like) | 0.06 | 0.14 | 0.09 |
+
+   * The two CLIP heads learned *different* nuisance cues. A2-all8 mostly reacts to compression strength; A2 (SD v1.4 only) mostly reacts to image scale. ResNet, which was trained with JPEG and blur augmentation, is the least affected, but it also detects the fewest fakes.
+4. **What would fix it** (future work, not done here):
+   * augment *both* classes with random JPEG quality (30–100) and random rescaling during training, so that compression and scale stop carrying label information;
+   * add real photos from phones and the web, plus fakes from current generators, to the training data;
+   * score several crops per image instead of a single centre crop.
+
 ## Limitations and responsible use
 
 * **Not proof.** The detector makes mistakes, especially on generators, image types or edits it has not seen. It is an academic demonstration, not a verification system.
@@ -222,7 +288,7 @@ The honest estimate for a truly new generator is the leave-one-generator-out acc
   * GenImage fakes are ImageNet-class images from 2021–2023 generators. Newer generators (SDXL, FLUX, DALL·E 3, recent Midjourney) may behave differently; the in-the-wild set gives a first indication.
   * The reals are ImageNet photographs, so other domains (art, screenshots, faces, medical images) are untested.
 * **Remaining biases.**
-  * Re-encoding both classes at quality 96 removes the format shortcut, but reals end up double-compressed while fakes are compressed once.
+  * Re-encoding both classes at quality 96 removes the format shortcut, but reals end up double-compressed while fakes are compressed once. The in-the-wild test shows that the models did learn this cue: a real photo that was compressed only once at high quality is often called fake (see [In the wild](#in-the-wild-new-generators-and-our-own-phone-photos)).
   * BigGAN images (128 px) must be upscaled to 224, which adds interpolation traces that real images rarely have. In training, the only upscaled images are about 7% of the reals (those with a side under 224 px); no fakes are upscaled. A model could therefore learn "interpolation traces mean real", which would push BigGAN fakes towards *real*. Check BigGAN's fake accuracy against its real accuracy before blaming the generator itself.
   * We discuss both effects in the report.
 * **Licence.** Trained weights inherit the non-commercial terms of the training data.

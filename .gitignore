@@ -17,3 +17,6 @@ data/wild/
 /fakelens_results/
 *.zip
 /fakelens_all8/
+# personal photos and gathered wild images: never commit (public repo)
+/images-real/
+/data/wild/

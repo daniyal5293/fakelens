@@ -1,0 +1,5 @@
+variant,A2-all8,A2,B
+"original (q~96, ~4000 px)",0.8,0.457,0.171
+"same size, re-saved JPEG q69",0.114,0.514,0.114
+"shrunk to 1600 px, saved JPEG q96",0.286,0.057,0.143
+"shrunk to 1600 px, saved JPEG q69 (=WhatsApp-like)",0.057,0.143,0.086

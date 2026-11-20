@@ -70,6 +70,28 @@ def test_resnet_robustness_aggregate_plots(ready, tmp_path):
     robustness.main(["--config", str(cfg_path), "--ckpts", str(head_ckpt), "--split", "wild", "--conditions", "clean",
                      "--num-workers", "0"])
 
+    # local in-the-wild evaluation: two real subsets, two "generators", shared backbone pass + ResNet
+    import numpy as np
+    from PIL import Image
+
+    from fakelens import wild_eval
+
+    wild = tmp_path / "wild"
+    rng = np.random.default_rng(0)
+    for sub in ("real/camera", "real/whatsapp", "fake/gen-a", "fake/gen-b"):
+        (wild / sub).mkdir(parents=True)
+        for i in range(3):
+            arr = (rng.random((260 + 20 * i, 300, 3)) * 255).astype("uint8")
+            Image.fromarray(arr).save(wild / sub / f"{i}.{'jpg' if sub.startswith('real') else 'png'}")
+    wout = tmp_path / "wild_out"
+    wild_eval.main(["--wild", str(wild), "--ckpts", str(head_ckpt), str(head_ckpt), str(res_ckpt),
+                    "--names", "D0", "D0copy", "B", "--conditions", "clean", "social", "--out", str(wout)])
+    wp = pd.read_csv(wout / "wild_predictions.csv")
+    assert len(wp) == 2 * 12 and set(wp.subset) == {"camera", "whatsapp", "gen-a", "gen-b"}
+    assert np.allclose(wp.p_D0, wp.p_D0copy)  # same head on shared features -> identical scores
+    ws = pd.read_csv(wout / "wild_summary.csv")
+    assert set(ws.condition) == {"clean", "social"} and (wout / "wild_accuracy.png").exists()
+
     agg = evaluate.aggregate(runs / "p1", Path(ready["paths"]["results"]) / "p1")
     assert {"D0", "B"} <= set(agg.model)
     cmp = evaluate.compare(runs / "p1" / "D0" / "seed0", runs / "p1" / "B" / "seed0", ready["data"]["groups"], 50)
